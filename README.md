@@ -8,6 +8,8 @@ Plan mode guides while [pi-dsh-sandbox](https://github.com/Frost-rA9/pi-dsh-sand
 
 The code lives in `index.ts`, with one module per concern under `src/`.
 
+The design rationale and the dsh anchors are in [`docs/design.md`](docs/design.md).
+
 ## Install
 
 Install from GitHub:
@@ -95,12 +97,15 @@ Run the checks from the checkout:
 ```bash
 npm test
 npm run check
+npm run check:anchors
 npm run e2e
 ```
 
 `npm test` runs the unit tests in Node 24. `npm run check` symlinks the host pi package, `typebox`, and `@types/node` into a gitignored `node_modules`, then runs the compiler.
 
 `PI_PACKAGE_ROOT` and `PI_TSC` override the resolution.
+
+`npm run check:anchors` verifies the dsh and pi anchors in `docs/`, using `PI_DSH_ROOT` (or `--dsh`) when a `deepseek-harness` checkout exists. `--to <ref>` produces a drift report for a new dsh ref: mechanical drift with the changed literals, plus the anchors that need semantic review. `--report <path>` writes it to a file.
 
 `npm run e2e` drives `/plan`, `/plan off`, and `--plan` over the remote procedure call (RPC) mode of pi. It needs `pi` on `PATH`.
 

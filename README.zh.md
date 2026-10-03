@@ -8,6 +8,8 @@ plan 模式做指导，[pi-dsh-sandbox](https://github.com/Frost-rA9/pi-dsh-sand
 
 代码入口是 `index.ts`，`src/` 下每个模块管一件事。
 
+设计要点与 dsh 锚点见 [`docs/design.md`](docs/design.md)。
+
 ## 安装
 
 从 GitHub 安装：
@@ -95,12 +97,15 @@ plan 模式有这些限制：
 ```bash
 npm test
 npm run check
+npm run check:anchors
 npm run e2e
 ```
 
 `npm test` 用 Node 24 跑单测。`npm run check` 把宿主 pi 包、`typebox`、`@types/node` 符号链接进被 gitignore 的 `node_modules`，再跑编译器。
 
 `PI_PACKAGE_ROOT` 与 `PI_TSC` 覆盖解析路径。
+
+`npm run check:anchors` 校验 `docs/` 里的 dsh 与 pi 锚点，有 `deepseek-harness` 检出时用 `PI_DSH_ROOT` 或 `--dsh` 定位；传 `--to <ref>` 会对新的 dsh ref 产出一份漂移报告：机器可判定的漂移（含变更的字面量）与需要人工判定的锚点，`--report <path>` 可把报告写入文件。
 
 `npm run e2e` 走 pi 的远程过程调用（RPC）模式，驱动 `/plan`、`/plan off`、`--plan`，需要 `PATH` 上有 `pi`。
 
