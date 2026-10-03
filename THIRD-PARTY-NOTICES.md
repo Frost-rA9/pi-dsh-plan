@@ -1,15 +1,10 @@
 # Third-party notices
 
-## DeepSeek harness (`deepseek-harness`)
+## DeepSeek Harness (dsh)
 
-The `exit_plan_mode` tool description and the review option labels are adapted
-from `@deepseek-ai/dsh-plan-mode` in the DeepSeek harness. The plan-mode design
-(soft guidance, a deployment-owned policy section, an always-registered exit
-tool, and a reviewed plan) follows the same package.
+The `exit_plan_mode` description, its review prompts and error messages, and the mode-switch notice sentences are adapted from `@deepseek-ai/dsh-plan-mode` in [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness). The plan-mode design follows the same package.
 
-Source: https://github.com/deepseek-ai/deepseek-harness
-
-```
+```text
 MIT License
 
 Copyright (c) 2026 DeepSeek
