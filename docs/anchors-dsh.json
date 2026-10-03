@@ -1,0 +1,140 @@
+{
+  "upstream": "dsh",
+  "design": "docs/design.md",
+  "recordedRef": "5badb15009",
+  "dshPathsRelativeTo": "deepseek-harness repository root",
+  "piPathsRelativeTo": "this repository root",
+  "symbolMeans": "a substring that must appear in the file at recordedRef; null means the whole file",
+  "resultLabels": ["ported", "ported-verbatim", "substituted", "extended", "adapted", "not-ported"],
+  "anchors": [
+    {
+      "id": "durable-mode-state",
+      "behavior": "Durable mode state",
+      "contract": true,
+      "dsh": [
+        { "path": "packages/plan/plan-mode/src/index.ts", "symbol": "plan/mode" },
+        { "path": "packages/plan/plan-mode/src/index.ts", "symbol": "planProjectionDefinition" },
+        { "path": "packages/plan/plan-mode/src/types.ts", "symbol": "PlanProjection" }
+      ],
+      "pi": [
+        { "path": "src/state.ts", "symbol": "MODE_ENTRY" },
+        { "path": "src/state.ts", "symbol": "PlanState" }
+      ],
+      "result": "substituted",
+      "parity": null,
+      "note": "one appendEntry per change; the active-branch fold replaces the log-only event and the projection registry"
+    },
+    {
+      "id": "plan-guidance-section",
+      "behavior": "Plan guidance section",
+      "contract": true,
+      "dsh": [{ "path": "packages/plan/plan-mode/src/index.ts", "symbol": "plan:policy" }],
+      "pi": [
+        { "path": "src/guidance.ts", "symbol": "PLAN_POLICY_SECTION" },
+        { "path": "index.ts", "symbol": "before_agent_start" }
+      ],
+      "result": "ported",
+      "parity": null,
+      "note": "the key becomes plan_policy because pi renders section keys as XML tags"
+    },
+    {
+      "id": "plan-command",
+      "behavior": "/plan command",
+      "contract": true,
+      "dsh": [{ "path": "packages/plan/plan-mode/src/index.ts", "symbol": "name: 'plan'" }],
+      "pi": [
+        { "path": "src/command.ts", "symbol": "parsePlanArgs" },
+        { "path": "index.ts", "symbol": "registerCommand" }
+      ],
+      "result": "extended",
+      "parity": null,
+      "note": "bare /plan opens a picker and 'on' is explicit; /plan off cannot reject attachments because pi runs extension commands before attachment handling"
+    },
+    {
+      "id": "exit-tool-registration",
+      "behavior": "exit_plan_mode registration",
+      "contract": true,
+      "dsh": [{ "path": "packages/plan/plan-mode/src/index.ts", "symbol": "EXIT_PLAN_MODE" }],
+      "pi": [{ "path": "src/tool.ts", "symbol": "EXIT_PLAN_MODE" }],
+      "result": "ported",
+      "parity": null,
+      "note": "description adapted; see THIRD-PARTY-NOTICES.md"
+    },
+    {
+      "id": "plan-validation",
+      "behavior": "Plan validation",
+      "contract": true,
+      "dsh": [{ "path": "packages/plan/plan-mode/src/index.ts", "symbol": "firstHeading" }],
+      "pi": [{ "path": "src/plan.ts", "symbol": "validatePlan" }],
+      "result": "ported-verbatim",
+      "parity": null,
+      "note": "the anchoring regex is /^#\\s+\\S/ on the trimmed plan"
+    },
+    {
+      "id": "review-exchange",
+      "behavior": "Review exchange",
+      "contract": true,
+      "dsh": [{ "path": "packages/plan/plan-mode/src/index.ts", "symbol": "userQuestions" }],
+      "pi": [
+        { "path": "src/exit.ts", "symbol": "runExitPlanMode" },
+        { "path": "src/exit.ts", "symbol": "ui.select" }
+      ],
+      "result": "substituted",
+      "parity": null,
+      "note": "ctx.ui.select replaces user-questions; no free-text field, so Keep planning returns no feedback"
+    },
+    {
+      "id": "switch-narration",
+      "behavior": "Switch narration",
+      "contract": true,
+      "dsh": [{ "path": "packages/plan/plan-mode/src/index.ts", "symbol": "narration" }],
+      "pi": [
+        { "path": "src/notice.ts", "symbol": "switchNotice" },
+        { "path": "src/notice.ts", "symbol": "planNoticeText" }
+      ],
+      "result": "adapted",
+      "parity": null,
+      "note": "dsh wording ported; delivery is a visible custom message, and a mid-run entry carries the guidance text"
+    },
+    {
+      "id": "config-shape",
+      "behavior": "Config shape",
+      "contract": true,
+      "dsh": [{ "path": "packages/plan/plan-mode/src/index.ts", "symbol": "resolveConfig" }],
+      "pi": [{ "path": "src/config.ts", "symbol": "parseConfig" }],
+      "result": "adapted",
+      "parity": null,
+      "note": "same { section }-only strictness; validation moves to session_start because pi forbids action calls at load"
+    },
+    {
+      "id": "pending-selection",
+      "behavior": "Pending selection across a step",
+      "contract": false,
+      "dsh": [{ "path": "packages/plan/plan-mode/src/index.ts", "symbol": "pendingIntents" }],
+      "pi": [],
+      "result": "not-ported",
+      "parity": null,
+      "note": "pi commits at the command; one provider request covers an assistant turn and the section is frozen per run"
+    },
+    {
+      "id": "projection-pending",
+      "behavior": "Projection-derived pending",
+      "contract": false,
+      "dsh": [{ "path": "packages/plan/plan-mode/src/types.ts", "symbol": "pending" }],
+      "pi": [],
+      "result": "not-ported",
+      "parity": null,
+      "note": "pi has no command lifecycle to fold"
+    },
+    {
+      "id": "todo-plan-tracking",
+      "behavior": "Todo plan tracking",
+      "contract": false,
+      "dsh": [{ "path": "packages/todo/tool-todo/src/index.ts", "symbol": null }],
+      "pi": [],
+      "result": "not-ported",
+      "parity": null,
+      "note": "non-goal; the plan-step lifecycle belongs to a separate extension"
+    }
+  ]
+}

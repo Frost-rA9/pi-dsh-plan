@@ -1,0 +1,147 @@
+{
+  "upstream": "pi",
+  "design": "docs/design.md",
+  "package": "@earendil-works/pi-coding-agent",
+  "recordedVersion": "1.0.0",
+  "declarationsRelativeTo": "the installed package root",
+  "piPathsRelativeTo": "this repository root",
+  "evidenceLabels": ["documented-api", "documented-behavior", "observed-behavior", "package-export"],
+  "evidenceMeans": {
+    "documented-api": "a declared extension API in dist/core/extensions/types.d.ts",
+    "documented-behavior": "documented in docs/extensions.md, but only the behavior, not a signature",
+    "observed-behavior": "read from pi source; no compatibility promise",
+    "package-export": "exported by the package for pi's own use, not part of the extension API"
+  },
+  "seams": [
+    {
+      "id": "append-entry",
+      "seam": "ExtensionAPI.appendEntry",
+      "declaration": "dist/core/extensions/types.d.ts",
+      "symbol": "appendEntry",
+      "usage": ["src/state.ts"],
+      "evidence": "documented-api",
+      "coveredBy": "npm run check; tests/state.test.ts",
+      "risk": "state durability across resume and fork"
+    },
+    {
+      "id": "session-branch",
+      "seam": "session_start event + ReadonlySessionManager.getBranch()",
+      "declaration": "dist/core/session-manager.d.ts",
+      "symbol": "getBranch",
+      "usage": ["index.ts"],
+      "evidence": "documented-api",
+      "coveredBy": "npm run check; tests/state.test.ts; npm run e2e (get_entries)",
+      "risk": "restoring the mode from the active branch"
+    },
+    {
+      "id": "prompt-sections",
+      "seam": "before_agent_start + event.systemPromptOptions.sections",
+      "declaration": "dist/core/extensions/types.d.ts",
+      "symbol": "BeforeAgentStartEvent",
+      "usage": ["index.ts"],
+      "evidence": "documented-behavior",
+      "coveredBy": "tests/guidance.test.ts covers the function only; the wiring is a manual check",
+      "risk": "plan guidance delivery"
+    },
+    {
+      "id": "section-freeze",
+      "seam": "section assembly timing: built once per user prompt and frozen for the run",
+      "declaration": null,
+      "symbol": null,
+      "usage": ["index.ts"],
+      "evidence": "observed-behavior",
+      "coveredBy": "manual read of pi source on a version bump",
+      "risk": "if sections become per-request, the switch notice becomes duplicate delivery and should be removed"
+    },
+    {
+      "id": "custom-message",
+      "seam": "ExtensionAPI.sendMessage with display and deliverAs: steer",
+      "declaration": "dist/core/extensions/types.d.ts",
+      "symbol": "sendMessage",
+      "usage": ["index.ts"],
+      "evidence": "documented-api",
+      "coveredBy": "npm run check; npm run e2e (switch notice)",
+      "risk": "the visible switch notice"
+    },
+    {
+      "id": "user-message",
+      "seam": "ExtensionAPI.sendUserMessage with deliverAs: steer",
+      "declaration": "dist/core/extensions/types.d.ts",
+      "symbol": "sendUserMessage",
+      "usage": ["index.ts"],
+      "evidence": "documented-api",
+      "coveredBy": "npm run check; manual check for /plan <message>",
+      "risk": "/plan <message> becomes the next request under plan guidance"
+    },
+    {
+      "id": "commands-flags",
+      "seam": "ExtensionAPI.registerCommand, registerFlag, getFlag",
+      "declaration": "dist/core/extensions/types.d.ts",
+      "symbol": "registerCommand",
+      "usage": ["index.ts"],
+      "evidence": "documented-api",
+      "coveredBy": "npm run check; npm run e2e (get_commands, --plan)",
+      "risk": "the /plan surface and the --plan flag"
+    },
+    {
+      "id": "tool-definition",
+      "seam": "ExtensionAPI.registerTool + defineTool + execute(toolCallId, params, signal, onUpdate, ctx)",
+      "declaration": "dist/core/extensions/types.d.ts",
+      "symbol": "ToolDefinition",
+      "usage": ["src/tool.ts"],
+      "evidence": "documented-api",
+      "coveredBy": "npm run check; tests/exit.test.ts covers the decision logic, not the wiring",
+      "risk": "the exit tool registration and its execute hook"
+    },
+    {
+      "id": "dialogs",
+      "seam": "ExtensionContext.ui.select + hasUI",
+      "declaration": "dist/core/extensions/types.d.ts",
+      "symbol": "select",
+      "usage": ["index.ts", "src/exit.ts"],
+      "evidence": "documented-api",
+      "coveredBy": "npm run check; npm run e2e (picker select); the exit review is a manual check",
+      "risk": "the /plan picker and the plan review"
+    },
+    {
+      "id": "idle-signal",
+      "seam": "ExtensionContext.isIdle()",
+      "declaration": "dist/core/extensions/types.d.ts",
+      "symbol": "isIdle",
+      "usage": ["index.ts"],
+      "evidence": "documented-api",
+      "coveredBy": "npm run check",
+      "risk": "append versus steer for the notice, and the picker message"
+    },
+    {
+      "id": "status",
+      "seam": "ExtensionContext.ui.setStatus + ui.theme.fg",
+      "declaration": "dist/core/extensions/types.d.ts",
+      "symbol": "setStatus",
+      "usage": ["index.ts"],
+      "evidence": "documented-api",
+      "coveredBy": "npm run check; manual check of the footer",
+      "risk": "the [plan mode::on] footer token"
+    },
+    {
+      "id": "config-paths",
+      "seam": "getAgentDir + CONFIG_DIR_NAME",
+      "declaration": "dist/config.d.ts",
+      "symbol": "getAgentDir",
+      "usage": ["index.ts"],
+      "evidence": "documented-api",
+      "coveredBy": "npm run check",
+      "risk": "the global and project config file locations"
+    },
+    {
+      "id": "attachment-order",
+      "seam": "extension commands run before attachment handling",
+      "declaration": null,
+      "symbol": null,
+      "usage": ["index.ts"],
+      "evidence": "observed-behavior",
+      "coveredBy": "manual read of pi prompt() on a version bump",
+      "risk": "the documented limitation that /plan off cannot reject attachments"
+    }
+  ]
+}
