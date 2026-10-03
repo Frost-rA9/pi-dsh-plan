@@ -12,7 +12,8 @@
   "scripts": {
     "test": "node --test tests/*.test.ts",
     "e2e": "node scripts/e2e-rpc.mjs",
-    "check": "node scripts/check-types.mjs"
+    "check": "node scripts/check-types.mjs",
+    "check:anchors": "node scripts/check-anchors.mjs"
   },
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": "*",
