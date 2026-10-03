@@ -1,0 +1,30 @@
+{
+  "name": "pi-dsh-plan",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "dsh-style plan mode for pi: deployment-owned guidance, a /plan command, and a reviewed exit",
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.ts",
+    "e2e": "node scripts/e2e-rpc.mjs",
+    "check": "node scripts/check-types.mjs"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "typebox": "*"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Frost-rA9/pi-dsh-plan.git"
+  },
+  "keywords": [
+    "pi-package",
+    "plan-mode"
+  ]
+}
