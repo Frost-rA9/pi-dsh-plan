@@ -1,6 +1,7 @@
 /**
- * Plan artifact validation and review outcome, kept free of pi imports so the
- * rules are unit-testable without a host installation.
+ * Plan artifact validation, review outcome, and the collapsed preview excerpt,
+ * kept free of pi imports so the rules are unit-testable without a host
+ * installation.
  *
  * The rules are dsh's: the plan is a markdown document whose first heading
  * names it, the review offers exactly `Approve` and `Keep planning`, and a
@@ -27,6 +28,36 @@ export function firstHeading(plan: string): string | undefined {
     if (match) return match[1];
   }
   return undefined;
+}
+
+/** How many plan lines the collapsed tool-row preview shows. */
+export const PLAN_PREVIEW_LINES = 10;
+
+/** The collapsed preview of a submitted plan. */
+export interface PlanExcerpt {
+  /** The leading plan lines, at most the requested maximum. */
+  lines: string[];
+  /** How many lines follow the excerpt. */
+  remaining: number;
+}
+
+/**
+ * Take the collapsed preview of a plan: the leading lines of the plan body,
+ * after the heading that names it, plus the count the renderer turns into an
+ * expand hint. The caller renders that heading as the row's title.
+ *
+ * @param plan The plan markdown, validated or still streaming.
+ * @param maxLines Maximum excerpt lines; `0` or less yields no lines.
+ */
+export function planExcerpt(plan: string, maxLines: number = PLAN_PREVIEW_LINES): PlanExcerpt {
+  const trimmed = plan.trim();
+  if (trimmed === "") return { lines: [], remaining: 0 };
+  const lines = trimmed.split("\n");
+  const heading = firstHeading(lines[0] ?? "") !== undefined;
+  const start = heading ? ((lines[1] ?? "").trim() === "" ? 2 : 1) : 0;
+  const body = lines.slice(start);
+  const shown = Math.max(0, maxLines);
+  return { lines: body.slice(0, shown), remaining: Math.max(0, body.length - shown) };
 }
 
 /**

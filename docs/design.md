@@ -104,6 +104,22 @@ The section is assembled once per user prompt and frozen for the run, which is w
 >
 > **Fallback:** the section corrects at the next prompt even if the notice is missed.
 
+### 4.5 The submitted plan renders in the tool row
+
+> **Why & What: the plan is shown, not only reviewed**
+>
+> **What:** `exit_plan_mode` registers `renderCall`, which draws the plan as markdown in the tool row: collapsed to the first `PLAN_PREVIEW_LINES` body lines with a `keyHint("app.tools.expand", ...)` hint, and expanded to the whole plan. `app.tools.expand` (ctrl+O by default) and a left click in fullscreen toggle it, and the selector that runs the review forwards the expand key, so the plan is readable while the decision is pending.
+>
+> **Why:** dsh presents the plan through the `plan-review` intent, a card titled by the first heading with the document openable in a sidebar viewer. pi has no sidebar or document pane, and `ctx.ui.select` takes only a title, so the review dialog cannot carry the body. The tool row is the nearest markdown-capable surface that the TUI transcript and the HTML export both draw, and it is display-only, so the plan does not enter model context a second time.
+>
+> **Alternatives considered:**
+> - *A custom message with `registerMessageRenderer`:* it draws in the message area, but a custom message is delivered to the model, so the whole plan would enter context again.
+> - *`ctx.ui.custom` with a markdown viewer:* it would carry the plan inside the review and could collect free-text feedback too, but it is TUI-only and returns `undefined` in RPC, so it needs a second code path.
+>
+> **Fallback:** renderers are TUI-only, so RPC, print, and JSON clients read the plan from the raw `tool_execution_start` payload.
+
+Manual check in the TUI: a call shows the collapsed preview, `ctrl+O` expands it, and a left click expands it once the call has a result. During the review dialog only `ctrl+O` works, because the click region ignores a call without a result, and the mouse reaches components only in fullscreen mode. The HTML export parses the same renderer in a process with no keybindings registered, so the hint drops the key there and reads `to expand`; `npm run e2e` checks that export path.
+
 ## 5. Porting results and dsh anchors
 
 | Behavior | dsh anchor | pi anchor | Port result |
@@ -114,6 +130,7 @@ The section is assembled once per user prompt and frozen for the run, which is w
 | `exit_plan_mode` registration | `packages/plan/plan-mode/src/index.ts` (`EXIT_PLAN_MODE`) | `src/tool.ts` | Ported; the description is adapted (see `THIRD-PARTY-NOTICES.md`). |
 | Plan validation | `packages/plan/plan-mode/src/index.ts` (`/^#\s+\S/`, `firstHeading`) | `src/plan.ts` (`validatePlan`, `firstHeading`) | Ported verbatim. |
 | Review exchange | `packages/plan/plan-mode/src/index.ts` (user-questions, `Approve` / `Keep planning` / free text) | `src/exit.ts` (`runExitPlanMode`), `src/tool.ts` | Substituted: `ctx.ui.select` with the two labels. No free-text field, so `Keep planning` returns no feedback. |
+| Plan presentation and preview | `packages/plan/plan-mode/src/index.ts` (`presentCall`, `presentResult`, `plan-review`), `packages/client/ui-plan/src/client/PlanPreview.tsx` | `src/preview.ts` (`renderPlanPreview`), `src/tool.ts` (`renderCall`) | Substituted: markdown in the tool row, collapsed by default and expandable, instead of the review card and sidebar viewer. TUI and HTML export only. |
 | Switch narration | `packages/plan/plan-mode/src/index.ts` (`narration`, `activeAtLastHeader`) | `src/notice.ts` (`switchNotice`, `planNoticeText`) | Ported wording; delivery adapted to a visible custom message, and a mid-run entry carries the guidance text. |
 | Config shape | `packages/plan/plan-mode/src/index.ts` (`resolveConfig`, `{ section }` only) | `src/config.ts` (`parseConfig`) | Ported strictness; validation moves from plugin load to `session_start`, because pi forbids action calls at load. |
 | Pending selection across a step | `packages/plan/plan-mode/src/index.ts` (`pendingIntents`, `agent/pre-step`) | not ported | Divergence: pi commits at the command, because one provider request covers an assistant turn and the section is frozen per run. |
@@ -126,6 +143,7 @@ Benefits:
 
 - A stable tool catalog: entering or leaving plan mode changes the prompt section, not the request tool catalog.
 - Deployment-owned wording, so the guidance follows the deployment rather than the extension.
+- The submitted plan is readable in the transcript before approval, collapsed by default and expandable in place.
 - Recovery from the active branch, so resume and fork keep the mode without a live mirror.
 - Fail-closed review: a missing dialog channel leaves plan mode on instead of approving silently.
 
@@ -134,6 +152,7 @@ Costs:
 - The storage substitution drops dsh's projection-derived `pending` view, so no surface says a plan-mode change is still queued.
 - The review cannot collect feedback text, so `Keep planning` always returns without direction.
 - The frozen section needs a second delivery path, the notice, which dsh does not have.
+- The preview is TUI-only, so RPC, print, and JSON clients read the raw tool argument.
 - The mode is guidance only, so a model that ignores it still mutates files unless the sandbox is configured.
 
 ## 7. Open questions

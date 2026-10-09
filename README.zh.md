@@ -20,7 +20,7 @@ pi install git:github.com/Frost-rA9/pi-dsh-plan
 
 也可以安装本地 checkout：在包含它的目录里运行 `pi install ./pi-dsh-plan`。
 
-本扩展没有运行时依赖，因为 pi 在加载时提供并别名 `@earendil-works/pi-coding-agent` 与 `typebox`。
+本扩展没有运行时依赖，因为 pi 在加载时提供并别名 `@earendil-works/pi-coding-agent`、`@earendil-works/pi-tui` 与 `typebox`。
 
 ## 使用
 
@@ -39,7 +39,7 @@ pi install git:github.com/Frost-rA9/pi-dsh-plan
 
 ## 审阅式退场
 
-agent 拿到完整计划后，会调用 `exit_plan_mode`，传入以 `#` 标题开头的 markdown。工具调用会展示计划，pi 请你选择：
+agent 拿到完整计划后，会调用 `exit_plan_mode`，传入以 `#` 标题开头的 markdown。工具调用会展示计划：TUI 把它渲染成 markdown，默认只显示开头一小段并带展开提示，`ctrl+O`（全屏下也可点击）展开；审阅弹窗会转发展开快捷键，所以决策时就能读到计划。pi 请你选择：
 
 - `Approve`：plan 模式结束，工具结果告诉模型开始执行计划
 - `Keep planning`：调用失败，模型修改计划
@@ -86,6 +86,7 @@ plan 模式有这些限制：
 
 - **只做指导，不做强制**：所有工具始终可调用，需要限制请用 pi-dsh-sandbox
 - **section 在 run 内冻结**：section 到下一次 prompt 才更新，这期间的请求由 notice 兜底
+- **预览只在 TUI**：TUI 与 HTML 导出把计划渲染为 markdown，其他客户端读到的是工具调用里的原始 `plan` 参数
 - **Keep planning 不带反馈**：`select` 弹窗没有自由文本字段
 - **命令收不到附件**：pi 在处理附件之前先执行扩展命令，所以 `/plan off` 无法拒绝图片，`/plan <message>` 也无法携带图片
 - **没有创建期 plan 选项**：fork 的会话继承日志状态；新会话默认关闭，除非传 `--plan`
@@ -107,7 +108,7 @@ npm run e2e
 
 `npm run check:anchors` 校验 `docs/` 里的 dsh 与 pi 锚点，有 `deepseek-harness` 检出时用 `PI_DSH_ROOT` 或 `--dsh` 定位；传 `--to <ref>` 会对新的 dsh ref 产出一份漂移报告：机器可判定的漂移（含变更的字面量）与需要人工判定的锚点，`--report <path>` 可把报告写入文件。
 
-`npm run e2e` 走 pi 的远程过程调用（RPC）模式，驱动 `/plan`、`/plan off`、`--plan`，需要 `PATH` 上有 `pi`。
+`npm run e2e` 走 pi 的远程过程调用（RPC）模式，驱动 `/plan`、`/plan off`、`--plan`，并导出一个会话 fixture 以通过真实工具渲染器检查计划预览，需要 `PATH` 上有 `pi`。
 
 ## 许可证
 

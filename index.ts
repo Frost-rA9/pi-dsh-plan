@@ -16,7 +16,7 @@
  * model-level turn remain manual checks):
  *   1. skeleton: package, manifest, `/plan`, `plan_policy` section, state seam.
  *   2. state: appendEntry, `session_start` restore, footer status.
- *   3. exit: `exit_plan_mode`, review, approved exit.
+ *   3. exit: `exit_plan_mode`, review, approved exit, tool-row preview.
  *   4. mid-run correction: a visible switch notice for the rest of a run.
  *   5. flag and details: `--plan`, restoration precedence.
  *   6. docs: bilingual README and the DeepSeek MIT notice.

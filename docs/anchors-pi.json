@@ -94,6 +94,56 @@
       "risk": "the exit tool registration and its execute hook"
     },
     {
+      "id": "tool-renderers",
+      "seam": "ToolDefinition.renderCall(args, theme, context) + ToolRenderContext.expanded",
+      "declaration": "dist/core/extensions/types.d.ts",
+      "symbol": "renderCall",
+      "usage": ["src/preview.ts", "src/tool.ts"],
+      "evidence": "documented-api",
+      "coveredBy": "npm run check; npm run e2e (export_html snapshot); a manual check of the TUI row",
+      "risk": "the plan preview rendering and its collapsed/expanded states"
+    },
+    {
+      "id": "tool-row-expansion",
+      "seam": "tool-row expansion: app.tools.expand and a MouseRegion left click re-render with expanded true, and the review selector forwards the key",
+      "declaration": "dist/modes/interactive/components/tool-execution.js",
+      "symbol": "createResultRegion",
+      "usage": ["src/preview.ts"],
+      "evidence": "observed-behavior",
+      "coveredBy": "a manual check of the TUI row",
+      "risk": "expanding the plan preview while the review dialog is open"
+    },
+    {
+      "id": "markdown-theme",
+      "seam": "getMarkdownTheme() for ExtensionAPI renderers",
+      "declaration": "dist/index.d.ts",
+      "symbol": "getMarkdownTheme",
+      "usage": ["src/preview.ts"],
+      "evidence": "documented-behavior",
+      "coveredBy": "npm run check",
+      "risk": "the plan preview follows the active markdown theme"
+    },
+    {
+      "id": "key-hint",
+      "seam": "keyHint/keyText(keybinding, description) for renderer expand hints, with the bare action when no keybindings are registered",
+      "declaration": "dist/index.d.ts",
+      "symbol": "keyHint",
+      "usage": ["src/preview.ts"],
+      "evidence": "package-export",
+      "coveredBy": "npm run check; npm run e2e (export_html snapshot)",
+      "risk": "the expand hint names the configured app.tools.expand key, and degrades to `to expand` in the HTML export"
+    },
+    {
+      "id": "pi-tui-runtime-alias",
+      "seam": "the extension loader aliases @earendil-works/pi-tui to the bundled copy, which supplies Markdown, Text, and Container",
+      "declaration": "dist/core/extensions/loader.js",
+      "symbol": "\"@earendil-works/pi-tui\": piTuiEntry",
+      "usage": ["src/preview.ts"],
+      "evidence": "observed-behavior",
+      "coveredBy": "npm run check symlinks pi-tui; npm run e2e proves the extension loads",
+      "risk": "the pi-tui import resolves at extension load"
+    },
+    {
       "id": "dialogs",
       "seam": "ExtensionContext.ui.select + hasUI",
       "declaration": "dist/core/extensions/types.d.ts",

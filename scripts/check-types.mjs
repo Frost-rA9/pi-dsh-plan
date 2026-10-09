@@ -1,12 +1,12 @@
 /**
  * Static type check without putting host packages in the repo.
  *
- * pi loads extensions with jiti and aliases `@earendil-works/pi-coding-agent`
- * and `typebox` to its own copies, so this package legitimately ships with no
- * runtime dependencies. Type checking still needs those declarations plus a
- * compiler, so this script SYMLINKS them into a gitignored `node_modules/`
- * (host copy, never a physical duplicate that could shadow pi's module
- * mapping) and then runs the compiler found on the machine.
+ * pi loads extensions with jiti and aliases `@earendil-works/pi-coding-agent`,
+ * `@earendil-works/pi-tui`, and `typebox` to its own copies, so this package
+ * legitimately ships with no runtime dependencies. Type checking still needs
+ * those declarations plus a compiler, so this script SYMLINKS them into a
+ * gitignored `node_modules/` (host copy, never a physical duplicate that could
+ * shadow pi's module mapping) and then runs the compiler found on the machine.
  *
  * Resolution order:
  *   - pi package root: $PI_PACKAGE_ROOT, else the volta install location
@@ -165,6 +165,18 @@ if (typebox === undefined) {
 
 link("@earendil-works/pi-coding-agent", piRoot);
 link("typebox", typebox);
+const piTui = [
+  join(packageRoot, "node_modules/@earendil-works/pi-tui"),
+  join(piRoot, "node_modules/@earendil-works/pi-tui"),
+].find((candidate) => existsSync(candidate));
+if (piTui === undefined) {
+  console.error(
+    "Could not locate @earendil-works/pi-tui. Install the declarations: "
+      + "npm install --no-save typescript @types/node typebox @earendil-works/pi-coding-agent",
+  );
+  process.exit(1);
+}
+link("@earendil-works/pi-tui", piTui);
 const typesNode = [
   join(packageRoot, "node_modules/@types/node"),
   join(piRoot, "node_modules/@types/node"),

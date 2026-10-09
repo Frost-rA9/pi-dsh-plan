@@ -20,7 +20,7 @@ pi install git:github.com/Frost-rA9/pi-dsh-plan
 
 To install a local checkout instead, run `pi install ./pi-dsh-plan` from the directory that contains it.
 
-The package ships no runtime dependencies, because pi aliases `@earendil-works/pi-coding-agent` and `typebox` at load time.
+The package ships no runtime dependencies, because pi aliases `@earendil-works/pi-coding-agent`, `@earendil-works/pi-tui`, and `typebox` at load time.
 
 ## Use
 
@@ -39,7 +39,7 @@ The `--plan` flag enters plan mode at startup and overrides the state restored f
 
 ## The reviewed exit
 
-When the agent has a complete plan, it calls `exit_plan_mode` with markdown that starts with a `#` heading. The tool call shows the plan, and pi asks you to choose:
+When the agent has a complete plan, it calls `exit_plan_mode` with markdown that starts with a `#` heading. The tool call shows the plan: the TUI renders it as markdown, collapsed to a short excerpt with an expand hint, and `ctrl+O` — or a click in fullscreen — expands it. The review dialog forwards the expand key, so the plan can be read while you decide. pi asks you to choose:
 
 - `Approve`: plan mode ends, and the tool result tells the model to execute the plan
 - `Keep planning`: the call fails, and the model revises the plan
@@ -86,6 +86,7 @@ Plan mode has these limits:
 
 - **Guidance, not enforcement**: every tool stays callable, so use pi-dsh-sandbox for confinement
 - **Frozen sections**: the section updates at your next prompt, and the notice covers the requests in between
+- **Preview is TUI-only**: the TUI and the HTML export render the plan as markdown; other clients read the raw `plan` argument from the tool call
 - **No feedback on keep-planning**: the `select` dialog has no free-text field
 - **Attachments never reach the command**: pi runs an extension command before attachment handling, so `/plan off` cannot reject images and `/plan <message>` cannot carry them
 - **No plan option at creation**: a forked session inherits the logged state, and a new session starts off unless you pass `--plan`
@@ -107,7 +108,7 @@ npm run e2e
 
 `npm run check:anchors` verifies the dsh and pi anchors in `docs/`, using `PI_DSH_ROOT` (or `--dsh`) when a `deepseek-harness` checkout exists. `--to <ref>` produces a drift report for a new dsh ref: mechanical drift with the changed literals, plus the anchors that need semantic review. `--report <path>` writes it to a file.
 
-`npm run e2e` drives `/plan`, `/plan off`, and `--plan` over the remote procedure call (RPC) mode of pi. It needs `pi` on `PATH`.
+`npm run e2e` drives `/plan`, `/plan off`, and `--plan` over the remote procedure call (RPC) mode of pi, and exports a session fixture to check the plan preview through the real tool renderer. It needs `pi` on `PATH`.
 
 ## License
 

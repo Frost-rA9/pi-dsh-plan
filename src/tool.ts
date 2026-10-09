@@ -8,8 +8,10 @@
  *
  * The submitted plan is visible to the user through the tool call itself, in
  * both the TUI transcript and the RPC `tool_execution_start` payload, so the
- * `select` only asks for the decision. After approval, `onApproved` emits the
- * visible switch notice. The description is adapted from dsh
+ * `select` only asks for the decision. `renderCall` draws the TUI form: the
+ * plan as markdown, collapsed to its leading lines and expandable with
+ * `app.tools.expand` or a click. After approval, `onApproved` emits the visible
+ * switch notice. The description is adapted from dsh
  * `@deepseek-ai/dsh-plan-mode`; see THIRD-PARTY-NOTICES.md.
  *
  * @module pi-dsh-plan/tool
@@ -18,6 +20,7 @@
 import { Type } from "typebox";
 import { defineTool, type ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { EXIT_PLAN_MODE, runExitPlanMode, type ExitPlanModeDeps } from "./exit.ts";
+import { renderPlanPreview } from "./preview.ts";
 
 export { EXIT_PLAN_MODE };
 
@@ -45,6 +48,10 @@ export function registerExitPlanMode(pi: ExtensionAPI, deps: RegisterExitPlanMod
           description: "The complete plan, as markdown, starting with a # heading that names it.",
         }),
       }),
+
+      renderCall(args, theme, context) {
+        return renderPlanPreview(args.plan, theme, context.expanded);
+      },
 
       async execute(_toolCallId, params, _signal, _onUpdate, ctx) {
         const result = await runExitPlanMode(

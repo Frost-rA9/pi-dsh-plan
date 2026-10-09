@@ -10,11 +10,15 @@
  *     `get_entries`;
  *   - a repeated `/plan on` is a no-op;
  *   - bare `/plan` opens the select picker, and answering it applies the mode;
- *   - `--plan` enters plan mode at session start, and `/plan off` clears it.
+ *   - `--plan` enters plan mode at session start, and `/plan off` clears it;
+ *   - a crafted session holding one `exit_plan_mode` call exports through
+ *     `export_html` with the real tool renderer, so the collapsed preview and
+ *     its expand hint are checked against pi, not only the pure excerpt.
  *
  * The reviewed `exit_plan_mode` exchange needs a real user (or an RPC client
  * that answers `extension_ui_request`) plus a model to call the tool, so it
- * stays a manual check.
+ * stays a manual check. The export check above reaches the renderer without a
+ * model, by loading a hand-written session fixture.
  *
  * Usage: node scripts/e2e-rpc.mjs [extensionDir]
  *
@@ -22,8 +26,10 @@
  */
 
 import { spawn } from "node:child_process";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
-import { dirname, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import readline from "node:readline";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -34,8 +40,9 @@ const rows = [];
 const record = (name, ok, detail = "") => rows.push([ok ? "PASS" : "FAIL", name, detail]);
 
 /** Start one pi RPC process and expose command sending, events, and UI replies. */
-function startPi(extraArgs = []) {
-  const child = spawn("pi", ["--mode", "rpc", "-e", extensionDir, "--no-session", ...extraArgs], {
+function startPi(extraArgs = [], options = {}) {
+  const sessionArgs = options.session === undefined ? ["--no-session"] : ["--session", options.session];
+  const child = spawn("pi", ["--mode", "rpc", "-e", extensionDir, ...sessionArgs, ...extraArgs], {
     cwd: process.cwd(),
     stdio: ["pipe", "pipe", "pipe"],
   });
@@ -209,9 +216,105 @@ async function flagSession() {
   }
 }
 
+/** Scenario C: a session fixture with one `exit_plan_mode` call exports the real preview. */
+async function previewExport() {
+  const dir = mkdtempSync(join(tmpdir(), "pi-dsh-plan-e2e-"));
+  try {
+    const sessionFile = join(dir, "preview.jsonl");
+    writeSessionFixture(sessionFile);
+    const pi = startPi([], { session: sessionFile });
+    try {
+      const state = await pi.send({ type: "get_state" });
+      record("the preview session fixture loads", state.success === true);
+
+      const outputPath = join(dir, "preview.html");
+      const exported = await pi.send({ type: "export_html", outputPath });
+      record(
+        "export_html writes the session",
+        exported.success === true && exported.data?.path === outputPath,
+        exported.error ?? "",
+      );
+
+      const callHtml = renderedCallHtml(readFileSync(outputPath, "utf8"), "call_plan_fixture");
+      record(
+        "the exported preview renders the tool title and plan heading",
+        callHtml.includes("exit_plan_mode") && callHtml.includes("Preview export fixture"),
+      );
+      record(
+        "the exported preview shows the collapsed excerpt and expand hint",
+        callHtml.includes("Intro line one.") && /\(\d+ more lines/.test(callHtml) && callHtml.includes("to expand"),
+      );
+      record("the exported preview starts collapsed", !callHtml.includes("step 12"));
+    } finally {
+      pi.close();
+    }
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+/** The fixture plan: a heading, an intro, and enough steps to overflow the excerpt. */
+const PREVIEW_PLAN = [
+  "# Preview export fixture",
+  "",
+  "Intro line one.",
+  "",
+  ...Array.from({ length: 12 }, (_, index) => `${index + 1}. step ${index + 1}`),
+].join("\n");
+
+/** Write a minimal v3 session holding one `exit_plan_mode` call and its result. */
+function writeSessionFixture(path) {
+  const now = Date.now();
+  const iso = (offset) => new Date(now + offset).toISOString();
+  const lines = [
+    { type: "session", version: 3, id: "01abcdef-0000-7000-8000-000000000001", timestamp: iso(0), cwd: process.cwd() },
+    { type: "message", id: "a0000001", parentId: null, timestamp: iso(1), message: { role: "user", content: "Present the plan.", timestamp: now + 1 } },
+    {
+      type: "message",
+      id: "a0000002",
+      parentId: "a0000001",
+      timestamp: iso(2),
+      message: {
+        role: "assistant",
+        content: [{ type: "toolCall", id: "call_plan_fixture", name: "exit_plan_mode", arguments: { plan: PREVIEW_PLAN } }],
+        api: "openai-completions",
+        provider: "fixture",
+        model: "fixture",
+        usage: { input: 1, output: 1, totalTokens: 2 },
+        stopReason: "toolUse",
+        timestamp: now + 2,
+      },
+    },
+    {
+      type: "message",
+      id: "a0000003",
+      parentId: "a0000002",
+      timestamp: iso(3),
+      message: {
+        role: "toolResult",
+        toolCallId: "call_plan_fixture",
+        toolName: "exit_plan_mode",
+        content: [{ type: "text", text: "Plan approved: plan mode exited; carry out the plan starting with your next step." }],
+        isError: false,
+        timestamp: now + 3,
+      },
+    },
+  ];
+  writeFileSync(path, `${lines.map((line) => JSON.stringify(line)).join("\n")}\n`);
+}
+
+/** Decode the export's embedded session data and return one pre-rendered call. */
+function renderedCallHtml(html, toolCallId) {
+  const base64 = /<script id="session-data" type="application\/json">([^<]+)<\/script>/.exec(html)?.[1];
+  if (base64 === undefined) return "";
+  const data = JSON.parse(Buffer.from(base64, "base64").toString("utf8"));
+  return data.renderedTools?.[toolCallId]?.callHtml ?? "";
+}
+
 try {
   await freshSession();
   await flagSession();
+  await previewExport();
 } catch (error) {
   record("unexpected failure", false, String(error));
 }

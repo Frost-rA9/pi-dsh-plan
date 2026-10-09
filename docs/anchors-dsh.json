@@ -84,6 +84,23 @@
       "note": "ctx.ui.select replaces user-questions; no free-text field, so Keep planning returns no feedback"
     },
     {
+      "id": "plan-presentation",
+      "behavior": "Plan presentation and preview",
+      "contract": true,
+      "dsh": [
+        { "path": "packages/plan/plan-mode/src/index.ts", "symbol": "presentCall" },
+        { "path": "packages/plan/plan-mode/src/index.ts", "symbol": "plan-review" },
+        { "path": "packages/client/ui-plan/src/client/PlanPreview.tsx", "symbol": "MarkdownText" }
+      ],
+      "pi": [
+        { "path": "src/preview.ts", "symbol": "renderPlanPreview" },
+        { "path": "src/tool.ts", "symbol": "renderCall" }
+      ],
+      "result": "substituted",
+      "parity": null,
+      "note": "markdown in the tool row, collapsed by default and expandable, instead of the plan-review card and sidebar viewer; TUI and HTML export only"
+    },
+    {
       "id": "switch-narration",
       "behavior": "Switch narration",
       "contract": true,
