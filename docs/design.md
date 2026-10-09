@@ -26,7 +26,7 @@
 - **Extended**: the port adds behavior dsh does not have at that anchor.
 - **Not ported**: the dsh feature is absent here, and the table names the consequence.
 
-The dsh anchors below were read from the `deepseek-harness` checkout at commit `5badb15009`. The pi behavior was verified against `pi-dsh-plan` at `8738c5d`. dsh paths are relative to the `deepseek-harness` root; pi paths are relative to this repository root. The dsh tree moves, so re-check a path and symbol before relying on it, and cite the commit when a divergence matters. Anchors for tooling live beside this document in [`anchors-dsh.json`](anchors-dsh.json) and [`anchors-pi.json`](anchors-pi.json); the table in chapter 5 is the readable view, and both are updated in the same change.
+The dsh anchors below were read from the `deepseek-harness` checkout at commit `5badb15009`. The pi behavior was verified against `pi-dsh-plan` at `35e5d4f`. dsh paths are relative to the `deepseek-harness` root; pi paths are relative to this repository root. The dsh tree moves, so re-check a path and symbol before relying on it, and cite the commit when a divergence matters. Anchors for tooling live beside this document in [`anchors-dsh.json`](anchors-dsh.json) and [`anchors-pi.json`](anchors-pi.json); the table in chapter 5 is the readable view, and both are updated in the same change.
 
 ## 3. Goals and non-goals
 
