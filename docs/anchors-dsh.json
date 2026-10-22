@@ -1,7 +1,7 @@
 {
   "upstream": "dsh",
   "design": "docs/design.md",
-  "recordedRef": "5badb15009",
+  "recordedRef": "687f282e86",
   "dshPathsRelativeTo": "deepseek-harness repository root",
   "piPathsRelativeTo": "this repository root",
   "symbolMeans": "a substring that must appear in the file at recordedRef; null means the whole file",
@@ -81,7 +81,7 @@
       ],
       "result": "substituted",
       "parity": null,
-      "note": "ctx.ui.select replaces user-questions; no free-text field, so Keep planning returns no feedback"
+      "note": "ctx.ui.select replaces user-questions; no free-text field, so Keep planning returns no feedback; a dismissed review returns a result with terminate, so the tool batch ends and the model waits for the user's next message"
     },
     {
       "id": "plan-presentation",

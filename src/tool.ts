@@ -58,7 +58,9 @@ export function registerExitPlanMode(pi: ExtensionAPI, deps: RegisterExitPlanMod
           { ...exitDeps, ui: { hasUI: ctx.hasUI, select: (title, options) => ctx.ui.select(title, options) } },
           params.plan,
         );
-        onApproved();
+        // A dismissed review returns normally to end the turn; only an
+        // approval changes the mode and earns the switch notice.
+        if (result.approved) onApproved();
         return result;
       },
     }),

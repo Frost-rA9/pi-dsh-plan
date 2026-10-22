@@ -5,8 +5,9 @@
  * The rules are dsh's: the tool is callable only in plan mode, the plan must be
  * non-empty markdown starting with a heading, approval is exactly one `Approve`
  * answer, a dismissed review is neither approval nor a failed review, and any
- * other answer keeps planning. A missing dialog channel fails the call closed;
- * `/plan off` remains the manual escape.
+ * other answer keeps planning. A dismissed review returns a result that ends
+ * the turn, because the user took the turn back to speak instead. A missing
+ * dialog channel fails the call closed; `/plan off` remains the manual escape.
  *
  * On approval the state is cleared immediately. dsh instead records a silent
  * pending exit appended at the next in-turn pre-step, and suppresses narration
@@ -41,10 +42,14 @@ export interface ExitPlanModeDeps {
   ui: ReviewUI;
 }
 
-/** The tool result for an approved plan. */
+/** The tool result for a reviewed exit. */
 export interface ExitPlanModeResult {
   content: { type: "text"; text: string }[];
   details: undefined;
+  /** Whether the user approved the plan. */
+  approved: boolean;
+  /** Stop the agent's automatic follow-up after this tool batch. */
+  terminate?: boolean;
 }
 
 /**
@@ -52,9 +57,9 @@ export interface ExitPlanModeResult {
  *
  * @param deps State, appender, and review channel.
  * @param rawPlan The raw `plan` tool argument.
- * @returns The approval result.
+ * @returns The approval or dismissal result.
  * @throws Outside plan mode, for an invalid plan, without a review channel,
- * when dismissed, and when the user keeps planning.
+ * and when the user keeps planning.
  */
 export async function runExitPlanMode(
   deps: ExitPlanModeDeps,
@@ -78,10 +83,18 @@ export async function runExitPlanMode(
 
   switch (reviewOutcome(choice)) {
     case "dismissed":
-      throw new Error(
-        "The user dismissed the plan review to speak instead; stay in plan mode, stop here, "
-          + "and wait for their message.",
-      );
+      return {
+        content: [
+          {
+            type: "text",
+            text: "The user dismissed the plan review to reply in their own words; "
+              + "plan mode remains active.",
+          },
+        ],
+        details: undefined,
+        approved: false,
+        terminate: true,
+      };
     case "keep":
       throw new Error("The user chose to keep planning; revise the plan and present it again.");
     case "approve":
@@ -97,5 +110,6 @@ export async function runExitPlanMode(
       },
     ],
     details: undefined,
+    approved: true,
   };
 }

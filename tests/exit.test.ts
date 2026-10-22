@@ -66,12 +66,13 @@ test("a missing dialog channel fails closed", async () => {
   assert.equal(b.state.active(), true);
 });
 
-test("a dismissed review stays in plan mode", async () => {
+test("a dismissed review stays in plan mode and ends the turn", async () => {
   const b = bench(undefined);
-  await assert.rejects(
-    runExitPlanMode({ state: b.state, pi: b.appender, ui: b.ui }, PLAN),
-    /dismissed the plan review/,
-  );
+  const result = await runExitPlanMode({ state: b.state, pi: b.appender, ui: b.ui }, PLAN);
+  assert.match(result.content[0]!.text, /dismissed the plan review/);
+  assert.equal(result.approved, false);
+  assert.equal(result.terminate, true);
+  assert.equal(result.details, undefined);
   assert.equal(b.state.active(), true);
   assert.deepEqual(b.entries, []);
 });
@@ -90,6 +91,8 @@ test("approval clears the state exactly once", async () => {
   const b = bench(APPROVE_LABEL);
   const result = await runExitPlanMode({ state: b.state, pi: b.appender, ui: b.ui }, PLAN);
   assert.match(result.content[0]!.text, /Plan approved/);
+  assert.equal(result.approved, true);
+  assert.equal(result.terminate, undefined);
   assert.equal(result.details, undefined);
   assert.equal(b.state.active(), false);
   assert.deepEqual(b.entries, [{ customType: MODE_ENTRY, data: { active: false } }]);
