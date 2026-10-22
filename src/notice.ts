@@ -10,10 +10,10 @@
  * user sees the switch copy, and so does the model.
  *
  * Entering plan mode while a run is open also carries the guidance text,
- * because pi assembles the `plan_policy` section once per user prompt and
- * freezes it for the whole run. Without the text the model would not learn the
- * guidance until the next prompt. At a prompt boundary the section carries the
- * guidance, so the notice stays the short switch sentence.
+ * because pi assembles the `plan_policy` section once per run and freezes it
+ * for that run. Without the text the model would not learn the guidance until
+ * the next run. At the start of a run the section carries the guidance, so the
+ * notice stays the short switch sentence.
  *
  * @module pi-dsh-plan/notice
  */

@@ -8,9 +8,9 @@
  * next assembled prompt. Inactive mode contributes nothing.
  *
  * Note the granularity: sections are assembled from the options captured when
- * the user prompt starts, so a mode change during an open run cannot affect the
- * section until the next user prompt. The `context` correction added in a later
- * construction step covers the remainder of the open run.
+ * the run starts, so a mode change during an open run cannot affect the section
+ * until the next run. The mode-change notice (`src/notice.ts`) covers the
+ * remainder of the open run.
  *
  * @module pi-dsh-plan/guidance
  */

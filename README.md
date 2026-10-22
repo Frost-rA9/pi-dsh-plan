@@ -6,8 +6,6 @@ Plan mode for [pi](https://github.com/earendil-works/pi): the agent explores and
 
 Plan mode guides while [pi-dsh-sandbox](https://github.com/Frost-rA9/pi-dsh-sandbox) confines. The two keep separate state.
 
-The code lives in `index.ts`, with one module per concern under `src/`.
-
 The design rationale and the dsh anchors are in [`docs/design.md`](docs/design.md).
 
 ## Install
@@ -39,11 +37,15 @@ The `--plan` flag enters plan mode at startup and overrides the state restored f
 
 ## The reviewed exit
 
-When the agent has a complete plan, it calls `exit_plan_mode` with markdown that starts with a `#` heading. The tool call shows the plan: the TUI renders it as markdown, collapsed to a short excerpt with an expand hint, and `ctrl+O` — or a click in fullscreen — expands it. The review dialog forwards the expand key, so the plan can be read while you decide. pi asks you to choose:
+When the agent has a complete plan, it calls `exit_plan_mode` with markdown that starts with a `#` heading. The tool call shows the plan.
+
+The TUI renders it as markdown, collapsed to a short excerpt with an expand hint. `ctrl+O`, or a click in fullscreen, expands it. The review dialog forwards the expand key, so the plan can be read while you decide.
+
+pi asks you to choose:
 
 - `Approve`: plan mode ends, and the tool result tells the model to execute the plan
 - `Keep planning`: the call fails, and the model revises the plan
-- Dismissed dialog: the call fails, and the model waits for your message
+- Dismissed dialog: plan mode stays on, and the turn ends so the model waits for your next message
 - No dialog channel: the call fails closed, and `/plan off` remains the manual escape
 
 The tool stays registered while plan mode is off. A transition therefore changes only the prompt section, not the tool catalog.
@@ -52,11 +54,11 @@ Calling the tool outside plan mode fails.
 
 ## Guidance timing
 
-pi builds the `plan_policy` section once per user prompt and freezes it for the whole run. A switch while the agent is working cannot change the section until your next prompt.
+pi builds the `plan_policy` section once per run and freezes it. A switch during a run cannot change the section until the next run.
 
-The extension sends a notice instead: one custom message per change, shown in the transcript and sent to the model as a user message.
+The extension sends one custom message per change instead. The message appears in the transcript and reaches the model.
 
-Entering plan mode while the agent is working carries the guidance text, because the frozen section has none. Leaving sends a withdrawal.
+Entering plan mode mid-run carries the guidance text, because the frozen section has none. Leaving sends the switch notice.
 
 A repeated selection, or `--plan` at startup, sends nothing.
 
@@ -76,7 +78,7 @@ Set the guidance text in `pi-dsh-plan.json` in `<your_agent_dir>/extensions/`. `
 }
 ```
 
-`section` is the only accepted key. An unknown key or a non-string value is reported at startup, and plan mode then contributes no guidance.
+`section` is the only accepted key. The extension reports an unknown key or a non-string value at startup, and plan mode then contributes no guidance.
 
 Without a section, plan mode still works but stays silent, and the session tells you once when plan mode starts.
 
@@ -85,8 +87,8 @@ Without a section, plan mode still works but stays silent, and the session tells
 Plan mode has these limits:
 
 - **Guidance, not enforcement**: every tool stays callable, so use pi-dsh-sandbox for confinement
-- **Frozen sections**: the section updates at your next prompt, and the notice covers the requests in between
-- **Preview is TUI-only**: the TUI and the HTML export render the plan as markdown; other clients read the raw `plan` argument from the tool call
+- **Frozen sections**: the section updates at the next run, and the notice covers the requests in between
+- **Preview is TUI-only**: the TUI and the HTML export render the plan as markdown. Other clients read the raw `plan` argument from the tool call
 - **No feedback on keep-planning**: the `select` dialog has no free-text field
 - **Attachments never reach the command**: pi runs an extension command before attachment handling, so `/plan off` cannot reject images and `/plan <message>` cannot carry them
 - **No plan option at creation**: a forked session inherits the logged state, and a new session starts off unless you pass `--plan`
@@ -108,8 +110,8 @@ npm run e2e
 
 `npm run check:anchors` verifies the dsh and pi anchors in `docs/`, using `PI_DSH_ROOT` (or `--dsh`) when a `deepseek-harness` checkout exists. `--to <ref>` produces a drift report for a new dsh ref: mechanical drift with the changed literals, plus the anchors that need semantic review. `--report <path>` writes it to a file.
 
-`npm run e2e` drives `/plan`, `/plan off`, and `--plan` over the remote procedure call (RPC) mode of pi, and exports a session fixture to check the plan preview through the real tool renderer. It needs `pi` on `PATH`.
+`npm run e2e` drives `/plan`, `/plan off`, and `--plan` over the remote procedure call (RPC) mode of pi. It also exports a session fixture to check the plan preview through the real tool renderer. It needs `pi` on `PATH`.
 
 ## License
 
-MIT. The `exit_plan_mode` description is adapted from the DeepSeek harness, and `THIRD-PARTY-NOTICES.md` carries the notice.
+MIT. The `exit_plan_mode` description follows the DeepSeek harness with edits. `THIRD-PARTY-NOTICES.md` carries the notice.

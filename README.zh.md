@@ -2,11 +2,9 @@
 
 [English](README.md) | 中文
 
-给 [pi](https://github.com/earendil-works/pi) 的 plan 模式：agent 先探索与设计，再动手执行。指导文本由你的部署提供，工具目录始终不变。
+[pi](https://github.com/earendil-works/pi) 的 plan 模式：agent 先探索与设计，再执行。指导文本由你的部署提供，所有工具始终可用。
 
 plan 模式做指导，[pi-dsh-sandbox](https://github.com/Frost-rA9/pi-dsh-sandbox) 做限制，两者各自维护状态。
-
-代码入口是 `index.ts`，`src/` 下每个模块管一件事。
 
 设计要点与 dsh 锚点见 [`docs/design.md`](docs/design.md)。
 
@@ -18,9 +16,9 @@ plan 模式做指导，[pi-dsh-sandbox](https://github.com/Frost-rA9/pi-dsh-sand
 pi install git:github.com/Frost-rA9/pi-dsh-plan
 ```
 
-也可以安装本地 checkout：在包含它的目录里运行 `pi install ./pi-dsh-plan`。
+也可以安装本地 checkout：在包含该检出的目录里运行 `pi install ./pi-dsh-plan`。
 
-本扩展没有运行时依赖，因为 pi 在加载时提供并别名 `@earendil-works/pi-coding-agent`、`@earendil-works/pi-tui` 与 `typebox`。
+本扩展没有运行时依赖。pi 在加载时提供这些包并设置别名：`@earendil-works/pi-coding-agent`、`@earendil-works/pi-tui` 与 `typebox`。
 
 ## 使用
 
@@ -39,12 +37,16 @@ pi install git:github.com/Frost-rA9/pi-dsh-plan
 
 ## 审阅式退场
 
-agent 拿到完整计划后，会调用 `exit_plan_mode`，传入以 `#` 标题开头的 markdown。工具调用会展示计划：TUI 把它渲染成 markdown，默认只显示开头一小段并带展开提示，`ctrl+O`（全屏下也可点击）展开；审阅弹窗会转发展开快捷键，所以决策时就能读到计划。pi 请你选择：
+agent 拿到完整计划后，会调用 `exit_plan_mode`，传入以 `#` 标题开头的 markdown。工具调用会展示计划。
+
+TUI 把计划渲染成 markdown，默认只显示开头一小段并带展开提示。按 `ctrl+O`（全屏下也可点击）展开。审阅弹窗会转发展开快捷键，所以决策时就能读到计划。
+
+pi 请你选择：
 
 - `Approve`：plan 模式结束，工具结果告诉模型开始执行计划
 - `Keep planning`：调用失败，模型修改计划
-- 关闭弹窗：调用失败，模型等待你的消息
-- 没有对话通道：调用 fail closed，`/plan off` 仍是手动出口
+- 关闭弹窗：本轮结束，plan 模式保持开启，模型等待你的下一条消息
+- 没有对话通道：调用失败并保持关闭，`/plan off` 仍是手动出口
 
 该工具在 plan 模式关闭时也保持注册。切换因此只改变 prompt section，不改工具目录。
 
@@ -52,17 +54,17 @@ agent 拿到完整计划后，会调用 `exit_plan_mode`，传入以 `#` 标题�
 
 ## 指导文本的生效时机
 
-pi 在每次用户 prompt 时构建一次 `plan_policy` section，并在整个 run 内冻结。agent 工作期间切换模式，要等到下一次 prompt 才能改变 section。
+pi 在每次 run 构建一份 `plan_policy` section，并在该 run 内冻结。agent 工作期间切换模式，要等到下一次 run 才能改变 section。
 
-此时扩展改为发一条 notice：每次变更一条 custom message，显示在 transcript 中，并以用户消息发给模型。
+扩展改为每次变更发送一条 notice。notice 显示在 transcript 中，并送达模型。
 
-agent 工作期间进入 plan 模式，notice 会带上指导文本，因为冻结的 section 里没有。离开时发一条撤销 notice。
+agent 工作期间进入 plan 模式，notice 会带上指导文本，因为冻结的 section 里没有。离开时发送切换 notice。
 
-重复选择，或启动时的 `--plan`，都不发。
+重复选择，或启动时的 `--plan`，都不发送 notice。
 
 ## 会话状态
 
-每次模式变更向会话追加一条 `dsh-plan-mode` 条目。启动时扩展折叠活跃分支，最后一条生效。
+每次模式变更向会话追加一条 `dsh-plan-mode` 条目。启动时扩展读取活跃分支，最后一条生效。
 
 条目不会进入模型上下文。
 
@@ -76,7 +78,7 @@ agent 工作期间进入 plan 模式，notice 会带上指导文本，因为冻�
 }
 ```
 
-`section` 是唯一接受的键。未知键或非字符串值会在启动时报告，此时 plan 模式不贡献任何指导。
+`section` 是唯一接受的键。扩展会在启动时报告未知键或非字符串值，此时 plan 模式不贡献任何指导。
 
 没有 `section` 时 plan 模式仍可用但保持静默，会话会在 plan 模式启动时提示一次。
 
@@ -85,11 +87,11 @@ agent 工作期间进入 plan 模式，notice 会带上指导文本，因为冻�
 plan 模式有这些限制：
 
 - **只做指导，不做强制**：所有工具始终可调用，需要限制请用 pi-dsh-sandbox
-- **section 在 run 内冻结**：section 到下一次 prompt 才更新，这期间的请求由 notice 兜底
-- **预览只在 TUI**：TUI 与 HTML 导出把计划渲染为 markdown，其他客户端读到的是工具调用里的原始 `plan` 参数
+- **section 在 run 内冻结**：section 到下一次 run 才更新，这期间的指导由 notice 传递
+- **预览走 TUI 渲染器**：TUI 与 HTML 导出把计划渲染为 markdown。其他客户端读到的是工具调用里的原始 `plan` 参数
 - **Keep planning 不带反馈**：`select` 弹窗没有自由文本字段
 - **命令收不到附件**：pi 在处理附件之前先执行扩展命令，所以 `/plan off` 无法拒绝图片，`/plan <message>` 也无法携带图片
-- **没有创建期 plan 选项**：fork 的会话继承日志状态；新会话默认关闭，除非传 `--plan`
+- **没有创建期 plan 选项**：fork 的会话继承日志状态。新会话里 plan 模式默认关闭，除非传 `--plan`
 
 ## 测试
 
@@ -102,13 +104,13 @@ npm run check:anchors
 npm run e2e
 ```
 
-`npm test` 用 Node 24 跑单测。`npm run check` 把宿主 pi 包、`typebox`、`@types/node` 符号链接进被 gitignore 的 `node_modules`，再跑编译器。
+`npm test` 在 Node 24 上运行单元测试。`npm run check` 把宿主 pi 包、`typebox`、`@types/node` 符号链接进 gitignore 忽略的 `node_modules`。随后运行编译器。
 
 `PI_PACKAGE_ROOT` 与 `PI_TSC` 覆盖解析路径。
 
-`npm run check:anchors` 校验 `docs/` 里的 dsh 与 pi 锚点，有 `deepseek-harness` 检出时用 `PI_DSH_ROOT` 或 `--dsh` 定位；传 `--to <ref>` 会对新的 dsh ref 产出一份漂移报告：机器可判定的漂移（含变更的字面量）与需要人工判定的锚点，`--report <path>` 可把报告写入文件。
+`npm run check:anchors` 校验 `docs/` 里的 dsh 与 pi 锚点。存在 `deepseek-harness` 检出时，用 `PI_DSH_ROOT` 或 `--dsh` 定位。传 `--to <ref>` 会对新的 dsh ref 产出漂移报告：机器可判定的漂移（含变更的字面量）与需要人工判定的锚点。`--report <path>` 把报告写入文件。
 
-`npm run e2e` 走 pi 的远程过程调用（RPC）模式，驱动 `/plan`、`/plan off`、`--plan`，并导出一个会话 fixture 以通过真实工具渲染器检查计划预览，需要 `PATH` 上有 `pi`。
+`npm run e2e` 通过 pi 的远程过程调用（RPC）模式，驱动 `/plan`、`/plan off`、`--plan`。该命令还导出一个会话 fixture，用真实工具渲染器检查计划预览。运行时需要 `PATH` 上有 `pi`。
 
 ## 许可证
 
